@@ -1,5 +1,7 @@
 # flutter_app_non_x_recorder
 
+This is **non-AndroidX** version using `flutter_audio_recorder` -> `0.4.9`
+
 A new Flutter application.
 
 ## Getting Started
