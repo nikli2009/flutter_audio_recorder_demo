@@ -45,6 +45,7 @@ class _MyHomePageState extends State<MyHomePage> {
   Recording _recording;
   Timer _t;
   Widget _buttonIcon = Icon(Icons.do_not_disturb_on);
+  String _alert;
 
   @override
   void initState() {
@@ -83,38 +84,43 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   Future _init() async {
-    var hasPermission = await FlutterAudioRecorder.hasPermissions;
-    if (hasPermission) {
-      String customPath = '/flutter_audio_recorder_';
-      io.Directory appDocDirectory;
-      if (io.Platform.isIOS) {
-        appDocDirectory = await getApplicationDocumentsDirectory();
-      } else {
-        appDocDirectory = await getExternalStorageDirectory();
-      }
-
-      // can add extension like ".mp4" ".wav" ".m4a" ".aac"
-      customPath = appDocDirectory.path +
-          customPath +
-          DateTime.now().millisecondsSinceEpoch.toString();
-
-      // .wav <---> AudioFormat.WAV
-      // .mp4 .m4a .aac <---> AudioFormat.AAC
-      // AudioFormat is optional, if given value, will overwrite path extension when there is conflicts.
-
-      _recorder = FlutterAudioRecorder(customPath,
-          audioFormat: AudioFormat.WAV, sampleRate: 22050);
-      await _recorder.initialized;
+    String customPath = '/flutter_audio_recorder_';
+    io.Directory appDocDirectory;
+    if (io.Platform.isIOS) {
+      appDocDirectory = await getApplicationDocumentsDirectory();
+    } else {
+      appDocDirectory = await getExternalStorageDirectory();
     }
+
+    // can add extension like ".mp4" ".wav" ".m4a" ".aac"
+    customPath = appDocDirectory.path +
+        customPath +
+        DateTime.now().millisecondsSinceEpoch.toString();
+
+    // .wav <---> AudioFormat.WAV
+    // .mp4 .m4a .aac <---> AudioFormat.AAC
+    // AudioFormat is optional, if given value, will overwrite path extension when there is conflicts.
+
+    _recorder = FlutterAudioRecorder(customPath,
+        audioFormat: AudioFormat.WAV, sampleRate: 22050);
+    await _recorder.initialized;
   }
 
   Future _prepare() async {
-    await _init();
-    var result = await _recorder.current();
-    setState(() {
-      _recording = result;
-      _buttonIcon = _playerIcon(_recording.status);
-    });
+    var hasPermission = await FlutterAudioRecorder.hasPermissions;
+    if (hasPermission) {
+      await _init();
+      var result = await _recorder.current();
+      setState(() {
+        _recording = result;
+        _buttonIcon = _playerIcon(_recording.status);
+        _alert = "";
+      });
+    } else {
+      setState(() {
+        _alert = "Permission Required.";
+      });
+    }
   }
 
   Future _startRecording() async {
@@ -187,7 +193,7 @@ class _MyHomePageState extends State<MyHomePage> {
                 height: 5,
               ),
               Text(
-                '${_recording?.path}',
+                '${_recording?.path ?? "-"}',
                 style: Theme.of(context).textTheme.body1,
               ),
               SizedBox(
@@ -201,7 +207,7 @@ class _MyHomePageState extends State<MyHomePage> {
                 height: 5,
               ),
               Text(
-                '${_recording?.duration}',
+                '${_recording?.duration ?? "-"}',
                 style: Theme.of(context).textTheme.body1,
               ),
               SizedBox(
@@ -215,7 +221,7 @@ class _MyHomePageState extends State<MyHomePage> {
                 height: 5,
               ),
               Text(
-                '${_recording?.metering?.averagePower}',
+                '${_recording?.metering?.averagePower ?? "-"}',
                 style: Theme.of(context).textTheme.body1,
               ),
               SizedBox(
@@ -229,7 +235,7 @@ class _MyHomePageState extends State<MyHomePage> {
                 height: 5,
               ),
               Text(
-                '${_recording?.status}',
+                '${_recording?.status ?? "-"}',
                 style: Theme.of(context).textTheme.body1,
               ),
               SizedBox(
@@ -242,6 +248,16 @@ class _MyHomePageState extends State<MyHomePage> {
                 onPressed: _recording?.status == RecordingStatus.Stopped
                     ? _play
                     : null,
+              ),
+              SizedBox(
+                height: 20,
+              ),
+              Text(
+                '${_alert ?? ""}',
+                style: Theme.of(context)
+                    .textTheme
+                    .title
+                    .copyWith(color: Colors.red),
               ),
             ],
           ),
