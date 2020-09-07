@@ -1,4 +1,4 @@
-# flutter_app_non_x_recorder
+# flutter_app_x_recorder
 
 This is **AndroidX** version using `flutter_audio_recorder` latest version.
 
